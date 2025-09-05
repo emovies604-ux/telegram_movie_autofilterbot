@@ -66,7 +66,7 @@ async def handle_search(client, message):
         reply_msg = await message.reply(
             "⚠️ Please start me in private chat to get movie files.", reply_markup=pm_button
         )
-        await auto_delete_message(reply_msg)
+        asyncio.create_task(auto_delete_message(reply_msg))
         return
 
     if query.startswith(f"@{app.me.username}"):
@@ -77,49 +77,52 @@ async def handle_search(client, message):
     results = search_files(query)
     if not results:
         reply_msg = await message.reply("🚫 Not Found! This message will delete in 30 seconds, so please forward the file if needed.")
-        await auto_delete_message(reply_msg)
+        asyncio.create_task(auto_delete_message(reply_msg))
         return
 
     warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it."
 
     if len(results) == 1:
         r = results[0]
+        file_name = r.get("file_name") or r.get("caption") or "Unknown file"
         file_type = r.get("file_type", "document")
+
         send_msg = None
         if file_type == "document":
-            send_msg = await message.reply_document(document=r["file_id"], caption=r["file_name"])
+            send_msg = await message.reply_document(document=r["file_id"], caption=file_name)
         elif file_type == "video":
-            send_msg = await message.reply_video(video=r["file_id"], caption=r["file_name"])
+            send_msg = await message.reply_video(video=r["file_id"], caption=file_name)
         elif file_type == "audio":
-            send_msg = await message.reply_audio(audio=r["file_id"], caption=r["file_name"])
+            send_msg = await message.reply_audio(audio=r["file_id"], caption=file_name)
         else:
-            send_msg = await message.reply_document(document=r["file_id"], caption=r["file_name"])
+            send_msg = await message.reply_document(document=r["file_id"], caption=file_name)
+
         warning_msg = await message.reply(warning_note)
-        await auto_delete_message(send_msg)
-        await auto_delete_message(warning_msg)
+        asyncio.create_task(auto_delete_message(send_msg))
+        asyncio.create_task(auto_delete_message(warning_msg))
+
     else:
         page = 1
         start = 0
-        chunk = results[start:start+RESULTS_PER_PAGE]
+        chunk = results[start:start + RESULTS_PER_PAGE]
 
         def get_buttons(page, total, chunk):
             buttons = [
-                [InlineKeyboardButton(f"{i+1+start}. {r['file_name'][:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
-                for i, r in enumerate(chunk)
-            ]
+                [InlineKeyboardButton(f"{i + 1 + start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
+                 for i, r in enumerate(chunk)]
             nav = []
             total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
             if page > 1:
-                nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page-1}"))
+                nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page - 1}"))
             if page < total_pages:
-                nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page+1}"))
+                nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page + 1}"))
             if nav:
                 buttons.append(nav)
             return buttons
 
         buttons = get_buttons(page, len(results), chunk)
         reply_msg = await message.reply("Multiple files found, select from below:\n\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
-        await auto_delete_message(reply_msg)
+        asyncio.create_task(auto_delete_message(reply_msg))
 
 @app.on_callback_query(filters.regex(rf"^{PAGE_CALLBACK_PREFIX}\|"))
 async def pagination_handler(client, callback_query):
@@ -134,9 +137,8 @@ async def pagination_handler(client, callback_query):
 
     def get_buttons(page, total, chunk):
         buttons = [
-            [InlineKeyboardButton(f"{i+1+start}. {r['file_name'][:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
-            for i, r in enumerate(chunk)
-        ]
+            [InlineKeyboardButton(f"{i+1+start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
+             for i, r in enumerate(chunk)]
         nav = []
         total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
         if page > 1:
@@ -154,7 +156,7 @@ async def pagination_handler(client, callback_query):
         msg_txt,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
-    await auto_delete_message(callback_query.message)
+    asyncio.create_task(auto_delete_message(callback_query.message))
     try:
         await callback_query.answer()
     except QueryIdInvalid:
