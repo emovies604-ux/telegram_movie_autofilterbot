@@ -1,9 +1,7 @@
-Flask
 pyrogram
 tgcrypto
 pymongo
 dnspython
 python-dotenv
 requests
-gunicorn
 aiohttp
