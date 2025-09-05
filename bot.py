@@ -11,10 +11,12 @@ import os
 
 logging.basicConfig(level=logging.INFO)
 
+# Pyrogram Bot initialization
 app = Client("autofilter-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 RESULTS_PER_PAGE = 10
 PAGE_CALLBACK_PREFIX = "filespage"
 
+# Flask minimal server for exposing port
 flask_app = Flask(__name__)
 
 @flask_app.route("/")
@@ -25,8 +27,8 @@ def run_flask_server():
     port = int(os.environ.get("PORT", 8080))
     flask_app.run(host="0.0.0.0", port=port)
 
-# Start Flask server in separate thread
 Thread(target=run_flask_server).start()
+
 
 async def is_user_admin(client, message):
     user_id = message.from_user.id
@@ -42,12 +44,14 @@ async def is_user_admin(client, message):
     except Exception:
         return False
 
+
 async def auto_delete_message(message, delay=30):
     await asyncio.sleep(delay)
     try:
         await message.delete()
     except:
         pass
+
 
 @app.on_message(
     filters.channel & filters.chat(FILES_CHANNEL_ID) & (filters.document | filters.video | filters.audio)
@@ -67,6 +71,7 @@ async def index_file(client, message):
     }
     add_file(file_info)
     await app.send_message(LOG_CHANNEL_ID, f"Indexed file: {file_info.get('file_name', '')}")
+
 
 @app.on_message(
     (filters.private | filters.group)
@@ -141,6 +146,7 @@ async def handle_search(client, message):
                                         reply_markup=InlineKeyboardMarkup(buttons))
         asyncio.create_task(auto_delete_message(reply_msg))
 
+
 @app.on_callback_query(filters.regex(rf"^{PAGE_CALLBACK_PREFIX}\|"))
 async def pagination_handler(client, callback_query):
     data = callback_query.data.split("|", 2)
@@ -179,6 +185,7 @@ async def pagination_handler(client, callback_query):
     except QueryIdInvalid:
         pass
 
+
 @app.on_callback_query(filters.regex(r"^sendfile\|"))
 async def send_file_handler(client, callback_query):
     doc_id = callback_query.data.split("|")[1]
@@ -204,12 +211,14 @@ async def send_file_handler(client, callback_query):
     except QueryIdInvalid:
         pass
 
+
 @app.on_message(filters.command("stats") & (filters.private | filters.group))
 async def stats(client, message):
     if not await is_user_admin(client, message):
         return await message.reply("❌ You don't have permission to use this command.")
     count = file_count()
     await message.reply(f"Total indexed files: {count}")
+
 
 @app.on_message(filters.command("deletefile") & filters.private)
 async def delete_file(client, message):
@@ -228,12 +237,14 @@ async def delete_file(client, message):
             deleted_count += 1
     await message.reply(f"Deleted {deleted_count} indexed file(s) matching '{name_to_delete}'.")
 
+
 @app.on_message(filters.command("start"))
 async def start(client, message):
     await message.reply(
         "👋 Welcome! Send a movie name to search files.\n"
         "Use commands /help, /stats (admins), or /deletefile <movie name> (admin only) to manage files."
     )
+
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message):
@@ -244,6 +255,7 @@ async def help_handler(client, message):
         "/deletefile <movie name> - Delete indexed files by name (admins only)\n"
         "Send a movie name to search files."
     )
+
 
 if __name__ == "__main__":
     app.run()
