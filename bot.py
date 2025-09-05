@@ -2,7 +2,7 @@ import logging
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from pyrogram.errors import UserNotParticipant
+from pyrogram.errors import UserNotParticipant, QueryIdInvalid
 from config import *
 from db import add_file, search_files, file_count, get_file_by_id, files
 
@@ -76,11 +76,11 @@ async def handle_search(client, message):
 
     results = search_files(query)
     if not results:
-        reply_msg = await message.reply("🚫 Not Found! This message will delete in 30 seconds.\nJoin SUPPORT CHANNEL: @billo_movies")
+        reply_msg = await message.reply("🚫 Not Found! This message will delete in 30 seconds, so please forward the file if needed.")
         await auto_delete_message(reply_msg)
         return
 
-    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies"
+    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it."
 
     if len(results) == 1:
         r = results[0]
@@ -100,8 +100,7 @@ async def handle_search(client, message):
     else:
         page = 1
         start = 0
-        end = RESULTS_PER_PAGE
-        chunk = results[start:end]
+        chunk = results[start:start+RESULTS_PER_PAGE]
 
         def get_buttons(page, total, chunk):
             buttons = [
@@ -119,10 +118,10 @@ async def handle_search(client, message):
             return buttons
 
         buttons = get_buttons(page, len(results), chunk)
-        reply_msg = await message.reply("JOIN SUPPORT CHANNEL: @billo_movies\n\nMultiple files found, select from below:\n\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
+        reply_msg = await message.reply("Multiple files found, select from below:\n\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
         await auto_delete_message(reply_msg)
 
-@app.on_callback_query(filters.regex(r"^filespage\|"))
+@app.on_callback_query(filters.regex(rf"^{PAGE_CALLBACK_PREFIX}\|"))
 async def pagination_handler(client, callback_query):
     data = callback_query.data.split("|", 2)
     if len(data) < 3:
@@ -131,8 +130,7 @@ async def pagination_handler(client, callback_query):
     page = int(page)
     results = search_files(query)
     start = (page-1) * RESULTS_PER_PAGE
-    end = page * RESULTS_PER_PAGE
-    chunk = results[start:end]
+    chunk = results[start:start+RESULTS_PER_PAGE]
 
     def get_buttons(page, total, chunk):
         buttons = [
@@ -150,14 +148,17 @@ async def pagination_handler(client, callback_query):
         return buttons
 
     buttons = get_buttons(page, len(results), chunk)
-    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies"
+    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it."
     msg_txt = "Multiple files found, select from below:\n\n" + warning_note
     await callback_query.message.edit_text(
         msg_txt,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
     await auto_delete_message(callback_query.message)
-    await callback_query.answer()
+    try:
+        await callback_query.answer()
+    except QueryIdInvalid:
+        pass
 
 @app.on_callback_query(filters.regex(r"^sendfile\|"))
 async def send_file_handler(client, callback_query):
@@ -169,19 +170,20 @@ async def send_file_handler(client, callback_query):
 
     file_id = file_record["file_id"]
     file_type = file_record.get("file_type", "document")
-    send_msg = None
+
     if file_type == "document":
-        send_msg = await callback_query.message.reply_document(document=file_id)
+        await callback_query.message.reply_document(document=file_id)
     elif file_type == "video":
-        send_msg = await callback_query.message.reply_video(video=file_id)
+        await callback_query.message.reply_video(video=file_id)
     elif file_type == "audio":
-        send_msg = await callback_query.message.reply_audio(audio=file_id)
+        await callback_query.message.reply_audio(audio=file_id)
     else:
-        send_msg = await callback_query.message.reply_document(document=file_id)
-    warning_msg = await callback_query.message.reply("ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies")
-    await auto_delete_message(send_msg)
-    await auto_delete_message(warning_msg)
-    await callback_query.answer()
+        await callback_query.message.reply_document(document=file_id)
+
+    try:
+        await callback_query.answer()
+    except QueryIdInvalid:
+        pass
 
 @app.on_message(filters.command("stats") & (filters.private | filters.group))
 async def stats(client, message):
@@ -210,13 +212,18 @@ async def delete_file(client, message):
 @app.on_message(filters.command("start"))
 async def start(client, message):
     await message.reply(
-        "👋 Welcome! Send a movie name to search files.\n Join SUPPORT CHANNEL: @billo_movies"
+        "👋 Welcome! Send a movie name to search files.\n"
+        "Use commands /help, /stats (admins), or /deletefile <movie name> (admin only) to manage files."
     )
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message):
     await message.reply(
-        "Send a movie name to search files. If available, files will be sent to you.\n Join SUPPORT CHANNEL: @billo_movies"
+        "/start - Start the bot\n"
+        "/help - Show this help message\n"
+        "/stats - Show indexed file count (admins only)\n"
+        "/deletefile <movie name> - Delete indexed files by name (admins only)\n"
+        "Send a movie name to search files."
     )
 
 if __name__ == "__main__":
