@@ -1,16 +1,32 @@
 import logging
 import asyncio
+from threading import Thread
+from flask import Flask
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.errors import UserNotParticipant, QueryIdInvalid
 from config import *
 from db import add_file, search_files, file_count, get_file_by_id, files
+import os
 
 logging.basicConfig(level=logging.INFO)
-app = Client("autofilter-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+app = Client("autofilter-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 RESULTS_PER_PAGE = 10
 PAGE_CALLBACK_PREFIX = "filespage"
+
+flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def home():
+    return "Bot is running"
+
+def run_flask_server():
+    port = int(os.environ.get("PORT", 8080))
+    flask_app.run(host="0.0.0.0", port=port)
+
+# Start Flask server in separate thread
+Thread(target=run_flask_server).start()
 
 async def is_user_admin(client, message):
     user_id = message.from_user.id
@@ -108,8 +124,8 @@ async def handle_search(client, message):
 
         def get_buttons(page, total, chunk):
             buttons = [
-                [InlineKeyboardButton(f"{i + 1 + start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
-                 for i, r in enumerate(chunk)]
+                [InlineKeyboardButton(f"{i + 1 + start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}",
+                                      callback_data=f"sendfile|{str(r['_id'])}")] for i, r in enumerate(chunk)]
             nav = []
             total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
             if page > 1:
@@ -121,7 +137,8 @@ async def handle_search(client, message):
             return buttons
 
         buttons = get_buttons(page, len(results), chunk)
-        reply_msg = await message.reply("Multiple files found, select from below:\n\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
+        reply_msg = await message.reply("Multiple files found, select from below:\n\n" + warning_note,
+                                        reply_markup=InlineKeyboardMarkup(buttons))
         asyncio.create_task(auto_delete_message(reply_msg))
 
 @app.on_callback_query(filters.regex(rf"^{PAGE_CALLBACK_PREFIX}\|"))
@@ -132,19 +149,19 @@ async def pagination_handler(client, callback_query):
     _, query, page = data
     page = int(page)
     results = search_files(query)
-    start = (page-1) * RESULTS_PER_PAGE
-    chunk = results[start:start+RESULTS_PER_PAGE]
+    start = (page - 1) * RESULTS_PER_PAGE
+    chunk = results[start:start + RESULTS_PER_PAGE]
 
     def get_buttons(page, total, chunk):
         buttons = [
-            [InlineKeyboardButton(f"{i+1+start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}", callback_data=f"sendfile|{str(r['_id'])}")]
-             for i, r in enumerate(chunk)]
+            [InlineKeyboardButton(f"{i + 1 + start}. {r.get('file_name', r.get('caption', 'Unknown'))[:40]}",
+                                  callback_data=f"sendfile|{str(r['_id'])}")] for i, r in enumerate(chunk)]
         nav = []
         total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
         if page > 1:
-            nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page-1}"))
+            nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page - 1}"))
         if page < total_pages:
-            nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page+1}"))
+            nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page + 1}"))
         if nav:
             buttons.append(nav)
         return buttons
