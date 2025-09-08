@@ -84,11 +84,11 @@ async def handle_search(client, message):
 
     results = search_files(query)
     if not results:
-        reply_msg = await message.reply("🚫 Not Found! This message will delete in 30 seconds.\nJoin SUPPORT CHANNEL: @billo_movies")
+        reply_msg = await message.reply("🚫 𝗡𝗼𝘁 𝗙𝗼𝘂𝗻𝗱!\n⏱ 𝐓𝐡𝐢𝐬 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐰𝐢𝐥𝐥 𝐝𝐞𝐥𝐞𝐭𝐞 𝐢𝐧 𝟑𝟎 𝐬𝐞𝐜𝐨𝐧𝐝𝐬..\n🔗 𝗝𝗼𝗶𝗻 𝗦𝗨𝗣𝗣𝗢𝗥𝗧 𝗖𝗛𝗔𝗡𝗡𝗘𝗟: @billo_movies ")
         await auto_delete_message(reply_msg)
         return
 
-    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies"
+    warning_note = "ℹ️ 𝗧𝗵𝗶𝘀 𝗺𝗲𝘀𝘀𝗮𝗴𝗲 𝘄𝗶𝗹𝗹 𝗱𝗲𝗹𝗲𝘁𝗲 𝗶𝗻 𝟯𝟬 𝘀𝗲𝗰𝗼𝗻𝗱𝘀..\n➡️ 𝗣𝗹𝗲𝗮𝘀𝗲 𝗳𝗼𝗿𝘄𝗮𝗿𝗱 𝘁𝗵𝗲 𝗳𝗶𝗹𝗲 𝗶𝗳 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 𝘁𝗼 𝗸𝗲𝗲𝗽 𝗶𝘁.\n📢 𝗝𝗼𝗶𝗻 𝗦𝗨𝗣𝗣𝗢𝗥𝗧 𝗖𝗛𝗔𝗡𝗡𝗘𝗟: @billo_movies"
 
     if len(results) == 1:
         r = results[0]
@@ -127,7 +127,7 @@ async def handle_search(client, message):
             return buttons
 
         buttons = get_buttons(page, len(results), chunk)
-        reply_msg = await message.reply("JOIN SUPPORT CHANNEL: @billo_movies\n\nMultiple files found, select from below:\n\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
+        reply_msg = await message.reply("📢 𝗝𝗼𝗶𝗻 𝗦𝗨𝗣𝗣𝗢𝗥𝗧 𝗖𝗛𝗔𝗡𝗡𝗘𝗟: @billo_movies\nMultiple files found, select from below:\n" + warning_note, reply_markup=InlineKeyboardMarkup(buttons))
         await auto_delete_message(reply_msg)
 
 
@@ -155,16 +155,16 @@ async def pagination_handler(client, callback_query):
         nav = []
         total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
         if page > 1:
-            nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page-1}"))
+            nav.append(InlineKeyboardButton("⬅️ Pʀᴇᴠ", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page-1}"))
         if page < total_pages:
-            nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page+1}"))
+            nav.append(InlineKeyboardButton("➡️ Nᴇxᴛ", callback_data=f"{PAGE_CALLBACK_PREFIX}|{query}|{page+1}"))
         if nav:
             buttons.append(nav)
         return buttons
 
     buttons = get_buttons(page, len(results), chunk)
-    warning_note = "ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies"
-    msg_txt = "Multiple files found, select from below:\n\n" + warning_note
+    warning_note = "ℹ️ 𝗧𝗵𝗶𝘀 𝗺𝗲𝘀𝘀𝗮𝗴𝗲 𝘄𝗶𝗹𝗹 𝗱𝗲𝗹𝗲𝘁𝗲 𝗶𝗻 𝟯𝟬 𝘀𝗲𝗰𝗼𝗻𝗱𝘀..\n➡️ 𝗣𝗹𝗲𝗮𝘀𝗲 𝗳𝗼𝗿𝘄𝗮𝗿𝗱 𝘁𝗵𝗲 𝗳𝗶𝗹𝗲 𝗶𝗳 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 𝘁𝗼 𝗸𝗲𝗲𝗽 𝗶𝘁.\n📢 𝗝𝗼𝗶𝗻 𝗦𝗨𝗣𝗣𝗢𝗥𝗧 𝗖𝗛𝗔𝗡𝗡𝗘𝗟: @billo_movies"
+    msg_txt = "📂 Mᴜʟᴛɪᴘʟᴇ ғɪʟᴇs ғᴏᴜɴᴅ!\n⬇️ Sᴇʟᴇᴄᴛ ғʀᴏᴍ ʙᴇʟᴏᴡ:\n" + warning_note
     await callback_query.message.edit_text(
         msg_txt,
         reply_markup=InlineKeyboardMarkup(buttons)
@@ -196,7 +196,7 @@ async def send_file_handler(client, callback_query):
     else:
         send_msg = await callback_query.message.reply_document(document=file_id, caption=caption)
 
-    warning_msg = await callback_query.message.reply("ℹ️ This message will delete in 30 seconds. Please forward the file if you want to keep it.\nJoin SUPPORT CHANNEL: @billo_movies")
+    warning_msg = await callback_query.message.reply("ℹ️ 𝗧𝗵𝗶𝘀 𝗺𝗲𝘀𝘀𝗮𝗴𝗲 𝘄𝗶𝗹𝗹 𝗱𝗲𝗹𝗲𝘁𝗲 𝗶𝗻 𝟯𝟬 𝘀𝗲𝗰𝗼𝗻𝗱𝘀..\n➡️ 𝗣𝗹𝗲𝗮𝘀𝗲 𝗳𝗼𝗿𝘄𝗮𝗿𝗱 𝘁𝗵𝗲 𝗳𝗶𝗹𝗲 𝗶𝗳 𝘆𝗼𝘂 𝘄𝗮𝗻𝘁 𝘁𝗼 𝗸𝗲𝗲𝗽 𝗶𝘁.\n📢 𝗝𝗼𝗶𝗻 𝗦𝗨𝗣𝗣𝗢𝗥𝗧 𝗖𝗛𝗔𝗡𝗡𝗘𝗟: @billo_movies")
     await auto_delete_message(send_msg)
     await auto_delete_message(warning_msg)
 
@@ -204,7 +204,7 @@ async def send_file_handler(client, callback_query):
 @app.on_message(filters.command("stats") & (filters.private | filters.group))
 async def stats(client, message):
     if not await is_user_admin(client, message):
-        return await message.reply("❌ You don't have permission to use this command.")
+        return await message.reply("❌ Yᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")
     count = file_count()
     await message.reply(f"Total indexed files: {count}")
 
@@ -212,7 +212,7 @@ async def stats(client, message):
 @app.on_message(filters.command("deletefile") & filters.private)
 async def delete_file(client, message):
     if not await is_user_admin(client, message):
-        return await message.reply("❌ You don't have permission to use this command.")
+        return await message.reply("❌ Yᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.")
     if len(message.command) < 2:
         return await message.reply("Usage: /deletefile <movie name>")
     name_to_delete = " ".join(message.command[1:]).strip()
@@ -230,14 +230,14 @@ async def delete_file(client, message):
 @app.on_message(filters.command("start"))
 async def start(client, message):
     await message.reply(
-        "👋 Welcome! Send a movie name to search files.\n Join SUPPORT CHANNEL: @billo_movies"
+        "👋 Wᴇʟᴄᴏᴍᴇ!\n🎬 Sᴇɴᴅ ᴀ ᴍᴏᴠɪᴇ ɴᴀᴍᴇ ᴛᴏ sᴇᴀʀᴄʜ ғɪʟᴇs.\n📢 Jᴏɪɴ Sᴜᴘᴘᴏʀᴛ Cʜᴀɴɴᴇʟ: @billo_movies"
     )
 
 
 @app.on_message(filters.command("help"))
 async def help_handler(client, message):
     await message.reply(
-        "Send a movie name to search files. If available, files will be sent to you.\n Join SUPPORT CHANNEL: @billo_movies"
+        "🎬 ѕєи∂ α мσνιє иαмє тσ ѕєαя¢н fιℓєѕ.\n📂 ιf αναιℓαвℓє, fιℓєѕ ωιℓℓ вє ѕєит тσ уσυ.\n📢 נσιи ѕυρρσят ¢нαииєℓ: @billo_movies"
     )
 
 
@@ -261,4 +261,5 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())   # start dummy server
     app.run()  # start Telegram bot
+
 
