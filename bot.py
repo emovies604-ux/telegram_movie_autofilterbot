@@ -122,7 +122,7 @@ async def handle_search(client, message):
 
         def get_buttons(page, total, chunk):
             buttons = [
-                [InlineKeyboardButton(f"{i+1+start}. 🎬 {r.get('file_name', r.get('caption', 'Unknown'))[:64]}", callback_data=f"sendfile|{str(r['_id'])}")]
+                [InlineKeyboardButton(f"{i+1+start}.{r.get('file_name', r.get('caption', 'Unknown'))[:64]}", callback_data=f"sendfile|{str(r['_id'])}")]
                 for i, r in enumerate(chunk)
             ]
             nav = []
@@ -160,7 +160,7 @@ async def pagination_handler(client, callback_query):
 
     def get_buttons(page, total, chunk):
         buttons = [
-            [InlineKeyboardButton(f"{i+1+start}. 🎬 {r.get('file_name', r.get('caption', 'Unknown'))[:64]}", callback_data=f"sendfile|{str(r['_id'])}")]
+            [InlineKeyboardButton(f"{i+1+start}.{r.get('file_name', r.get('caption', 'Unknown'))[:64]}", callback_data=f"sendfile|{str(r['_id'])}")]
             for i, r in enumerate(chunk)
         ]
         nav = []
@@ -257,14 +257,14 @@ async def help_handler(client, message):
         "🛠 **Help Menu**\n\n"
         "🔍 *Search:* Send a movie name to get files instantly.\n"
         "📂 *Results:* If multiple, you can choose via buttons.\n"
-        "⏳ *Auto-Delete:* Messages vanish in 30s (forward to keep).\n\n"
+        "⏳ *Auto-Delete:* Messages vanish in 30s (forward to keep files).\n\n"
         "📢 Updates: @billo_movies"
     )
 
 
 # ✅ Dummy web server for Render
 async def handle_root(request):
-    return web.Response(text="✅ Telegram AutoFilter Bot is Live & Running!")
+    return web.Response(text="✅ Billo Filter Bot is Live & Running!")
 
 
 async def run_web_server():
@@ -282,3 +282,4 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())
     app.run()
+
