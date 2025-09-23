@@ -48,9 +48,9 @@ async def index_file(client, message):
     try:
         member = await client.get_chat_member(message.chat.id, message.from_user.id)
         if member.status not in ["administrator", "creator"]:
-            return  # ignore non-admin uploads
+            return False  # ignore non-admin uploads
     except Exception:
-        return
+        return False
 
     media = message.document or message.video or message.audio
     if not media:
