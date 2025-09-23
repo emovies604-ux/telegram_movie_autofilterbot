@@ -8,7 +8,6 @@ from config import *
 from db import add_file, search_files, file_count, get_file_by_id, files
 from aiohttp import web   # ✅ for dummy web server
 
-
 logging.basicConfig(level=logging.INFO)
 app = Client("autofilter-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -282,4 +281,5 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())
     app.run()
+
 
