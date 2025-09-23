@@ -8,6 +8,7 @@ from config import *
 from db import add_file, search_files, file_count, get_file_by_id, files
 from aiohttp import web   # ✅ for dummy web server
 
+
 logging.basicConfig(level=logging.INFO)
 app = Client("autofilter-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -43,6 +44,14 @@ async def auto_delete_message(message, delay=30):
     filters.channel & filters.chat(FILES_CHANNEL_ID) & (filters.document | filters.video | filters.audio)
 )
 async def index_file(client, message):
+    # ✅ allow only admins to index
+    try:
+        member = await client.get_chat_member(message.chat.id, message.from_user.id)
+        if member.status not in ["administrator", "creator"]:
+            return  # ignore non-admin uploads
+    except Exception:
+        return
+
     media = message.document or message.video or message.audio
     if not media:
         return
@@ -281,5 +290,3 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())
     app.run()
-
-
