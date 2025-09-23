@@ -69,6 +69,7 @@ async def index_file(client, message):
         "file_id": media.file_id,
         "file_name": media.file_name,
         "caption": message.caption or "",
+        "file_type": "document" if message.document else "video" if message.video else "audio"
     }
     add_file(file_info)
     await app.send_message(LOG_CHANNEL_ID, f"📥 Indexed: **{file_info.get('file_name', '')}** ✅")
@@ -296,4 +297,5 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())
     app.run()
+
 
