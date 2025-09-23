@@ -43,26 +43,32 @@ async def auto_delete_message(message, delay=30):
 @app.on_message(
     filters.channel & filters.chat(FILES_CHANNEL_ID) & (filters.document | filters.video | filters.audio)
 )
+@app.on_message(
+    filters.channel & filters.chat(FILES_CHANNEL_ID) & (filters.document | filters.video | filters.audio)
+)
 async def index_file(client, message):
-    # ✅ allow only admins to index
-    try:
-        member = await client.get_chat_member(message.chat.id, message.from_user.id)
-        if member.status not in ["administrator", "creator"]:
-            return False  # ignore non-admin uploads
-    except Exception:
-        return False
+    # ✅ If uploaded by channel itself (sender_chat), allow it
+    if message.sender_chat:
+        allowed = True
+    else:
+        # ✅ Otherwise check if user is admin
+        try:
+            member = await client.get_chat_member(message.chat.id, message.from_user.id)
+            allowed = member.status in ["administrator", "creator"]
+        except Exception:
+            allowed = False
+
+    if not allowed:
+        return  # ignore non-admin uploads
 
     media = message.document or message.video or message.audio
     if not media:
         return
-    media_type = ("document" if message.document else "video" if message.video else "audio")
+
     file_info = {
         "file_id": media.file_id,
-        "file_name": media.file_name or "",
+        "file_name": media.file_name,
         "caption": message.caption or "",
-        "message_id": message.id,
-        "channel_id": message.chat.id,
-        "file_type": media_type
     }
     add_file(file_info)
     await app.send_message(LOG_CHANNEL_ID, f"📥 Indexed: **{file_info.get('file_name', '')}** ✅")
@@ -290,3 +296,4 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(run_web_server())
     app.run()
+
