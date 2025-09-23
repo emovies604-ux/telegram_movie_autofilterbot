@@ -10,7 +10,5 @@ MONGO_DB_URI = os.environ.get("MONGO_DB_URI")
 LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID"))
 FILES_CHANNEL_ID = int(os.environ.get("FILES_CHANNEL_ID"))
 
-
 # Parse comma separated admin ids from env, example: 123,4567890
 ADMIN_IDS = [int(x) for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
-
